@@ -39,22 +39,34 @@ class contrans:
         return headers
     
     def get_bioguideIDs(self):
-        params = {'api_key': self.congress_api_key}
+        params = {'api_key': self.congress_api_key,
+                  'limit': 1,
+                  'offset':0}
         headers = self.make_headers()
         root = "https://api.congress.gov/v3"
         endpoint = "/member"
         r = requests.get(root + endpoint,
                          params=params, 
                          headers=headers)
+        
+        
+
         bioguides = json.loads(r.text)
-        bio_df = pd.json_normalize(bioguides, record_path=['members'])
-        bio_df = bio_df[['name', 'state', 'district', 'bioguideId']]
+
+        total_records = bioguides['pagination']['count']
+
+        j = 0
+        bio_df = pd.DataFrame()
+        while j < total_records:
+            params['offset'] = j
+            params['limit'] = 250
+            r = requests.get(root + endpoint,
+                         params=params, 
+                         headers=headers)
+            records = pd.json_normalize(r.json()['members'])
+            bio_df = pd.concat([bio_df, records], ignore_index=True)
+            j += 250
+
+        # bio_df = pd.json_normalize(records)
+        # bio_df = bio_df['name', 'state', 'district', 'partyName', 'bioguideId']
         return bio_df
-
-
-
-
-    
-    
-    
-
