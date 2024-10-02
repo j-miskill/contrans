@@ -49,8 +49,6 @@ class contrans:
                          params=params, 
                          headers=headers)
         
-        
-
         bioguides = json.loads(r.text)
 
         total_records = bioguides['pagination']['count']
