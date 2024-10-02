@@ -92,15 +92,31 @@ class contrans:
     def get_sponsored_legislation(self, bioguideid):
         params = {'api_key': self.congress_api_key,
                   'limit': 250}
-        
         headers = self.make_headers()
         root = "https://api.congress.gov/v3/"
         endpoint = f"member/{bioguideid}/sponsored-legislation"
-        r = requests.get(root + endpoint,
+
+        temp_r = requests.get(root + endpoint,
+                         params=params, 
+                         headers=headers)
+        tmp = json.loads(temp_r.text)
+        total_records = tmp['pagination']['count']
+        
+        j=0
+        bills_dict = {}
+
+        while j < total_records:
+            params['offset'] = j
+        
+       
+            r = requests.get(root + endpoint,
                         params=params, 
                         headers=headers)
+            records = r.json()['sponsoredLegislation']
+            bills_dict = bills_dict.update(records)
+            j += 250
         
-        return json.loads(r.text)['sponsoredLegislation']
+        return bills_dict
 
 
 
