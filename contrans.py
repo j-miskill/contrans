@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import requests
 import json
+from bs4 import BeautifulSoup
 
 
 class contrans:
@@ -103,20 +104,30 @@ class contrans:
         total_records = tmp['pagination']['count']
         
         j=0
-        bills_dict = {}
+        bills_final = []
 
         while j < total_records:
             params['offset'] = j
         
-       
             r = requests.get(root + endpoint,
                         params=params, 
                         headers=headers)
             records = r.json()['sponsoredLegislation']
-            bills_dict = bills_dict.update(records)
+            for record in records:
+                bills_final.append(record)
             j += 250
         
-        return bills_dict
+        return bills_final
+    
+    def get_bill_data(self, bill_url):
+        r = requests.get(bill_url, params = {"api_key": self.congress_api_key})
+        txt_url = json.loads(r.text)['bill']['textVersions']['url']
+        r2 = requests.get(txt_url, params={"api_key": self.congress_api_key})
+        url_to_scrape = json.loads(r2.text)['textVersions'][0]['formats'][0]['url']
+
+        html_doc = requests.get(url_to_scrape)
+        gumbo = BeautifulSoup(html_doc.text, 'html.parser') 
+        return gumbo
 
 
 
