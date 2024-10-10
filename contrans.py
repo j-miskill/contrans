@@ -128,6 +128,18 @@ class contrans:
         html_doc = requests.get(url_to_scrape)
         gumbo = BeautifulSoup(html_doc.text, 'html.parser') 
         return gumbo
+    
+
+    def get_congressperson_news(self, member):
+        params = {"apiKey": self.news_api_key,
+                  "q": member,
+                  "sortBy": "relevancy",
+                  "source": "us"}
+        base = "https://newsapi.org/v2/"
+        endpoint = "everything"
+        headers = self.make_headers()
+        r = requests.get(params=params, url=base+endpoint, headers=headers)
+        return json.loads(r.text)
 
 
 
