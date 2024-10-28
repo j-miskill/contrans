@@ -193,7 +193,7 @@ class contrans:
                 crosswalk = pd.merge(members, cands, 
                      left_on=['name2', 'DistIDRunFor'],
                      right_on=['name2', 'DistIDRunFor'],
-                     how = 'inner')
+                     how = 'left')
                 return crosswalk
     
 
@@ -207,6 +207,37 @@ class contrans:
             termsDF = pd.concat([termsDF, df])
         members = members.drop("terms.item", axis=1)
         return termsDF, members
+    
+    ### Methods for building the third normal form relational database tables
+
+    def make_members_df(self, members, ideology):
+        """
+            members should be the output of get_bioguideIDs but w/ terms removed by get_terms
+            augmented with contributions by make_cand_table()
+
+            Ideology should be the output of get_ideology()
+        """
+        
+        members_df = pd.merge(members, ideology,
+                              left_on='bioguideId',
+                              right_on='bioguideId',
+                              how='left')
+        return members_df
+
+
+        
+
+    def make_terms_df(self):
+        pass
+
+    def make_votes_df(self):
+        pass
+
+    def make_agreements_df(self):
+        pass
+
+    
+    
 
 
 
