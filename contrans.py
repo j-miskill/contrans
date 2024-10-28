@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import requests
 import json
+import psycopg  # postgres adapter
+from sqlalchemy import create_engine  # shortcut tool to connect database to pandas
 from bs4 import BeautifulSoup
 
 
@@ -12,6 +14,9 @@ class contrans:
         self.mypassword = os.getenv('mypassword')
         self.news_api_key = os.getenv("NEWS_API_KEY")
         self.congress_api_key = os.getenv("CONGRESS_API_KEY")
+        self.postgres_password = os.getenv("POSTGRES_PASSWORD")
+        self.MONGO_INITDB_ROOT_USERNAME = os.getenv("MONGO_INITDB_ROOT_USERNAME")
+        self.MONGO_INITDB_ROOT_PASSWORD = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
         self.us_state_to_abbrev = {
                         "Alabama": "AL","Alaska": "AK","Arizona": "AZ","Arkansas": "AR",
                         "California": "CA","Colorado": "CO","Connecticut": "CT","Delaware": "DE",
@@ -210,7 +215,7 @@ class contrans:
     
     ### Methods for building the third normal form relational database tables
 
-    def make_members_df(self, members, ideology):
+    def make_members_df(self, members, ideology, engine):
         """
             members should be the output of get_bioguideIDs but w/ terms removed by get_terms
             augmented with contributions by make_cand_table()
@@ -222,13 +227,26 @@ class contrans:
                               left_on='bioguideId',
                               right_on='bioguideId',
                               how='left')
+        members_df.to_sql("members", con=engine, index=False, chunksize=1000, if_exists="replace")
         return members_df
+    
 
-
+    def connect_to_postgres(self, password, user='postgres', host='localhost', port='5432', create_contrans=False):
+        dbserver = psycopg.connect(user=user, password=password, host=host, port=port)
+        dbserver.autocommit = True
+        if create_contrans:
+            # cursor is the location for writing code to run on the server
+            cursor = dbserver.cursor()
+            cursor.execute("DROP DATABASE IF EXISTS contrans")
+            cursor.execute("CREATE DATABASE contrans")
         
+        engine = create_engine(f"postgresql+psycopg://{user}:{password}@{host}:{port}/contrans2024")
+        return dbserver, engine
 
-    def make_terms_df(self):
-        pass
+
+    def make_terms_df(self,terms, engine):
+        terms.to_sql("terms", con=engine, index=False, chunksize=1000, if_exists="replace")
+        
 
     def make_votes_df(self):
         pass
