@@ -225,8 +225,10 @@ class contrans:
         
         members_df = pd.merge(members, ideology,
                               left_on='bioguideId',
-                              right_on='bioguideId',
+                              right_on='bioguide_id',
                               how='left')
+        members_df.columns = members_df.columns.str.lower()
+        members_df.columns = members_df.columns.str.replace(".", "_")
         members_df.to_sql("members", con=engine, index=False, chunksize=1000, if_exists="replace")
         return members_df
     
@@ -240,26 +242,28 @@ class contrans:
             cursor.execute("DROP DATABASE IF EXISTS contrans")
             cursor.execute("CREATE DATABASE contrans")
         
-        engine = create_engine(f"postgresql+psycopg://{user}:{password}@{host}:{port}/contrans2024")
+        engine = create_engine(f"postgresql+psycopg://{user}:{password}@{host}:{port}/contrans")
         return dbserver, engine
 
 
     def make_terms_df(self,terms, engine):
+        terms.columns = terms.columns.str.lower()
         terms.to_sql("terms", con=engine, index=False, chunksize=1000, if_exists="replace")
         
 
-    def make_votes_df(self):
-        pass
+    def make_votes_df(self, votes, engine):
+        votes.columns = votes.columns.str.lower()
+        votes.to_sql("votes", con=engine, index=False, chunksize=1000, if_exists="replace")
+        
 
-    def make_agreements_df(self):
-        pass
+    def make_agreements_df(self, agreements, engine):
+        agreements.columns = agreements.columns.str.lower()
+        agreements.to_sql("agreements", con=engine, index=False, chunksize=1000, if_exists="replace")
 
-    
-    
-
-
-
-
-
-
-
+    def dbml_helper(self, data):
+        dt = data.dtypes.reset_index().rename({0:'dtype'}, axis=1)
+        replace_map = {'object': 'varchar',
+                    'int64': 'int',
+                    'float64': 'float'}
+        dt['dtype'] = dt['dtype'].replace(replace_map)
+        return dt.to_string(index=False, header=False)
