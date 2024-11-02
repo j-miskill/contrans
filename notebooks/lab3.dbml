@@ -1,0 +1,177 @@
+Project CARDIB {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Lab3 CARDIB database assignment
+    Data was collected from World Bank ESG data project and the University of Notre Dame. 
+  '''
+}
+  Table countrydata as C {
+        country_code varchar [pk]
+        country_name_wb varchar [pk]
+        country_longname varchar
+        currency_unit varchar
+        region varchar
+        income_group varchar
+        note: "country data baseline"
+  }
+  Table wb as W {
+        country_name_wb varchar [pk]
+        country_code varchar    [pk]
+        year     int            [pk]
+        access_to_clean_fuels_and_technologies_for_cooking   float
+        access_to_electricity   float
+        agricultural_land   float
+        agriculture   float
+        annual_freshwater_withdrawals   float
+        annualized_average_growth_rate_in_per_capita_real_survey_mean_consumption_or_income   float
+        cause_of_death   float
+        children_in_employment   float
+        co2_emissions   float
+        coastal_protection   float
+        control_of_corruption   float
+        cooling_degree_days   float
+        economic_social_rights_score   float
+        electricity_production_from_coal_sources   float
+        energy_imports   float
+        energy_intensity_level_of_primary_energy   float
+        energy_use   float
+        fertility_rate   float
+        food_production_index   float
+        forest_area   float
+        fossil_fuel_energy_consumption   float
+        gdp_growth   float
+        ghg_net_emissions   float
+        gini_index   float
+        government_effectiveness   float
+        government_expenditure_on_education   float
+        gross_school_enrollment   float
+        heat_index_35   float
+        heating_degree_days   float
+        hospital_beds   float
+        income_share_held_by_lowest_20pct   float
+        individuals_using_the_internet   float
+        labor_force_participation_rate   float
+        land_surface_temperature   float
+        level_of_water_stress   float
+        life_expectancy_at_birth   float
+        literacy_rate   float
+        mammal_species   float
+        mean_drought_index   float
+        methane_emissions   float
+        mortality_rate   float
+        natural_resources_depletion   float
+        net_forest_depletion   float
+        net_migration   float
+        nitrous_oxide_emissions   float
+        patent_applications   float
+        people_using_safely_managed_drinking_water_services   float
+        people_using_safely_managed_sanitation_services   float
+        pm2_5_air_pollution   float
+        political_stability_and_absence_of_violence   float
+        population_ages_65_and_above   float
+        population_density   float
+        poverty_headcount_ratio_at_national_poverty_lines   float
+        prevalence_of_overweight   float
+        prevalence_of_undernourishment   float
+        primary_school_enrollment   float
+        proportion_of_seats_held_by_women_in_national_parliaments   float
+        proportion_water_good_quality   float
+        ratio_of_female_to_male_labor_force_participation_rate   float
+        regulatory_quality   float
+        renewable_electricity_output   float
+        renewable_energy_consumption   float
+        research_and_development_expenditure   float
+        rule_of_law   float
+        scientific_and_technical_journal_articles   float
+        strength_of_legal_rights_index   float
+        terrestrial_and_marine_protected_areas   float
+        tree_cover_loss_hectares   float
+        unemployment   float
+        unmet_need_for_contraception   float
+        voice_and_accountability   float
+        note: "Data from the World Bank"
+  }
+  Table merged as M {
+        country_code varchar  [pk]
+        country_name_vdem varchar [pk]
+        year     int  [pk]
+        democracy   float
+        country_name_wb varchar [pk]
+        access_to_clean_fuels_and_technologies_for_cooking   float
+        access_to_electricity   float
+        agricultural_land   float
+        agriculture   float
+        annual_freshwater_withdrawals   float
+        annualized_average_growth_rate_in_per_capita_real_survey_mean_consumption_or_income   float
+        cause_of_death   float
+        children_in_employment   float
+        co2_emissions   float
+        coastal_protection   float
+        control_of_corruption   float
+        cooling_degree_days   float
+        economic_social_rights_score   float
+        electricity_production_from_coal_sources   float
+        energy_imports   float
+        energy_intensity_level_of_primary_energy   float
+        energy_use   float
+        fertility_rate   float
+        food_production_index   float
+        forest_area   float
+        fossil_fuel_energy_consumption   float
+        gdp_growth   float
+        ghg_net_emissions   float
+        gini_index   float
+        government_effectiveness   float
+        government_expenditure_on_education   float
+        gross_school_enrollment   float
+        heat_index_35   float
+        heating_degree_days   float
+        hospital_beds   float
+        income_share_held_by_lowest_20pct   float
+        individuals_using_the_internet   float
+        labor_force_participation_rate   float
+        land_surface_temperature   float
+        level_of_water_stress   float
+        life_expectancy_at_birth   float
+        literacy_rate   float
+        mammal_species   float
+        mean_drought_index   float
+        methane_emissions   float
+        mortality_rate   float
+        natural_resources_depletion   float
+        net_forest_depletion   float
+        net_migration   float
+        nitrous_oxide_emissions   float
+        patent_applications   float
+        people_using_safely_managed_drinking_water_services   float
+        people_using_safely_managed_sanitation_services   float
+        pm2_5_air_pollution   float
+        political_stability_and_absence_of_violence   float
+        population_ages_65_and_above   float
+        population_density   float
+        poverty_headcount_ratio_at_national_poverty_lines   float
+        prevalence_of_overweight   float
+        prevalence_of_undernourishment   float
+        primary_school_enrollment   float
+        proportion_of_seats_held_by_women_in_national_parliaments   float
+        proportion_water_good_quality   float
+        ratio_of_female_to_male_labor_force_participation_rate   float
+        regulatory_quality   float
+        renewable_electricity_output   float
+        renewable_energy_consumption   float
+        research_and_development_expenditure   float
+        rule_of_law   float
+        scientific_and_technical_journal_articles   float
+        strength_of_legal_rights_index   float
+        terrestrial_and_marine_protected_areas   float
+        tree_cover_loss_hectares   float
+        unemployment   float
+        unmet_need_for_contraception   float
+        voice_and_accountability   float
+        note: "Data merging vdem and wb data"
+  }
+Ref: C.country_code < M.country_code
+Ref: C.country_code < W.country_code
+Ref: C.country_name_wb < M.country_name_wb
+Ref: M.country_name_wb - W.country_name_wb
+Ref: M.year - W.year
