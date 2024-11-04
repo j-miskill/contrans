@@ -267,3 +267,5 @@ class contrans:
                     'float64': 'float'}
         dt['dtype'] = dt['dtype'].replace(replace_map)
         return dt.to_string(index=False, header=False)
+    
+    
