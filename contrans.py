@@ -6,6 +6,7 @@ import json
 import psycopg  # postgres adapter
 from sqlalchemy import create_engine  # shortcut tool to connect database to pandas
 from bs4 import BeautifulSoup
+import pymongo
 
 
 class contrans:
@@ -145,6 +146,7 @@ class contrans:
                 bills_final.append(record)
             j += 250
         
+        bills_final = [x for x in bills_final if "/bill" in x['url']]
         return bills_final
     
     def get_bill_data(self, bill_url):
@@ -155,7 +157,11 @@ class contrans:
 
         html_doc = requests.get(url_to_scrape)
         gumbo = BeautifulSoup(html_doc.text, 'html.parser') 
-        return gumbo
+        bill_text = gumbo.text
+       
+        tmp = txt_url['bill']['bill_text'] = bill_text
+        return tmp['bill']
+        
     
 
     def get_congressperson_news(self, member):
@@ -268,4 +274,56 @@ class contrans:
         dt['dtype'] = dt['dtype'].replace(replace_map)
         return dt.to_string(index=False, header=False)
     
+    def make_agreement_df(self, bioguide_id, engine):
+        myquery = f'''
+        SELECT icpsr
+            FROM members m
+        WHERE bioguideid = {bioguide_id}
+        '''
+        icpsr = int(pd.read_sql_query(myquery, con=engine)['icpsr'][0])
+        myquery = f'''
+        SELECT m.name, m.partyname, m.state, m.district, v.agree
+        FROM members m
+        INNER JOIN (
+        SELECT
+                a.icpsr AS icpsr1,
+                b.icpsr AS icpsr2,
+                AVG(CAST((a.cast_code = b.cast_code) AS INT)) AS agree
+                FROM votes a
+        INNER JOIN votes b
+                ON a.rollnumber = b.rollnumber
+                AND a.chamber = b.chamber
+        WHERE a.icpsr={icpsr} AND b.icpsr!={icpsr}
+        GROUP BY icpsr1, icpsr2
+        ORDER BY agree DESC
+        ) v
+        ON CAST(m.icpsr AS INT) = v.icpsr2
+        WHERE m.icpsr IS NOT NULL
+        ORDER BY v.agree DESC
+        '''
+        df = pd.read_sql_query(myquery, con=engine)
+        return df.head(10), df.tail(10)
     
+    def connect_to_mongo(self, from_scratch=False):
+        myclient = pymongo.MongoClient(f"mongodb://{self.MONGO_INITDB_ROOT_USERNAME}:{self.MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/")
+        mongo_contrans = myclient['contrans']
+        collist = mongo_contrans.list_collection_names()
+        if from_scratch and "bills" in collist:
+            mongo_contrans.bills.drop()
+        return mongo_contrans['bills']
+    
+    
+    def upload_to_mongo(self, mongo_bills: pymongo.MongoClient, bioguideid: str):
+        bill_list = self.get_sponsored_legislation(bioguideid)
+
+        all_bills = [self.get_bill_data((x['url'])) for x in bill_list]
+
+
+
+        onebill = self.get_bill_data(bill_list[0]['url'])
+
+
+
+
+
+
