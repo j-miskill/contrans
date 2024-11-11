@@ -7,6 +7,7 @@ import psycopg  # postgres adapter
 from sqlalchemy import create_engine  # shortcut tool to connect database to pandas
 from bs4 import BeautifulSoup
 import pymongo
+from bson.json_util import dumps, loads
 
 
 class contrans:
@@ -97,7 +98,7 @@ class contrans:
 
         # bio_df = pd.json_normalize(records)
         # bio_df = bio_df['name', 'state', 'district', 'partyName', 'bioguideId']
-        return bio_df
+        return bio_df.reset_index(drop=True)
 
     def get_bioguide(self, name, state=None, district=None):
         members = self.get_bioguideIDs() # pd dataframe, will replace with SQL query once we have a table to store things
@@ -119,7 +120,7 @@ class contrans:
         
         return members.reset_index(drop=True)
     
-    def get_sponsored_legislation(self, bioguideid):
+    def get_sponsored_legislation(self, bioguideid, congress=118):
         params = {'api_key': self.congress_api_key,
                   'limit': 250}
         headers = self.make_headers()
@@ -146,21 +147,22 @@ class contrans:
                 bills_final.append(record)
             j += 250
         
+        bills_final = [x for x in bills_final if x['congress']==congress]
         bills_final = [x for x in bills_final if "/bill" in x['url']]
         return bills_final
     
     def get_bill_data(self, bill_url):
         r = requests.get(bill_url, params = {"api_key": self.congress_api_key})
-        txt_url = json.loads(r.text)['bill']['textVersions']['url']
+        bills_json = json.loads(r.text)
+        txt_url = bills_json['bill']['textVersions']['url']
         r2 = requests.get(txt_url, params={"api_key": self.congress_api_key})
         url_to_scrape = json.loads(r2.text)['textVersions'][0]['formats'][0]['url']
 
         html_doc = requests.get(url_to_scrape)
         gumbo = BeautifulSoup(html_doc.text, 'html.parser') 
         bill_text = gumbo.text
-       
-        tmp = txt_url['bill']['bill_text'] = bill_text
-        return tmp['bill']
+        bills_json['bill_text'] = bill_text
+        return bills_json
         
     
 
@@ -313,17 +315,35 @@ class contrans:
         return mongo_contrans['bills']
     
     
-    def upload_to_mongo(self, mongo_bills: pymongo.MongoClient, bioguideid: str):
+    def upload_one_member_to_mongo(self, mongo_bills: pymongo.MongoClient, bioguideid: str):
+        # just one member's bills to be uploaded
         bill_list = self.get_sponsored_legislation(bioguideid)
+        bill_list_with_text = [self.get_bill_data(x['url']) for x in bill_list]
+        mongo_bills.insert_many(bill_list_with_text)
 
-        all_bills = [self.get_bill_data((x['url'])) for x in bill_list]
+    def upload_many_members_to_mongo(self, mongo_bills: pymongo.MongoClient, members: list):
+        for m in members:
+            print(f'Now uploading bills from {m} to MongoDB')
+            self.upload_one_member_to_mongo(mongo_bills=mongo_bills, bioguideid=m)
+
+    def query_mongo(self, collection, rows, columns):
+        cursor = collection.find(rows, columns)
+        result_dumps = dumps(cursor)
+        result_loads = loads(result_dumps)
+        result_df = pd.DataFrame.from_records(result_loads)
+        return result_df
+    
+    def query_mongo_search_engine(self, collection, key_to_search, search_terms):
+        collection.create_index([(key_to_search, 'text')])
 
 
-
-        onebill = self.get_bill_data(bill_list[0]['url'])
-
-
-
-
-
+        cursor = collection.find({"$text": 
+                                    {"$search": search_terms, 
+                                    "$caseSensitive": False}
+                                    }, 
+                                    {})
+        result_dumps = dumps(cursor)
+        result_loads = loads(result_dumps)
+        result_df = pd.DataFrame.from_records(result_loads)
+        return result_df
 
