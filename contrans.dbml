@@ -42,7 +42,7 @@ Project contrans {
       nominate_number_of_errors   float
       conditional varchar
       nokken_poole_dim1   float
-      note: "Members data combines COngress API bio infor with OpenSecrets ID and Voteview Ideology"
+      note: "Members data combines Congress API bio infor with OpenSecrets ID and Voteview Ideology"
   }
   Table terms as T {
     chamber varchar  

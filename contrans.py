@@ -322,9 +322,16 @@ class contrans:
         mongo_bills.insert_many(bill_list_with_text)
 
     def upload_many_members_to_mongo(self, mongo_bills: pymongo.MongoClient, members: list):
+        i = 1
         for m in members:
-            print(f'Now uploading bills from {m} to MongoDB')
-            self.upload_one_member_to_mongo(mongo_bills=mongo_bills, bioguideid=m)
+            try:
+                print('uploading bills from {m} to MongoDB: legislator {i} of {len(members)}')
+                self.upload_one_member_to_mongo(mongo_bills=mongo_bills, bioguideid=m)
+            except Exception as e:
+                print(f"Process failed for: {m} on the {i} index.")
+                print(e)
+                continue
+            i += 1
 
     def query_mongo(self, collection, rows, columns):
         cursor = collection.find(rows, columns)
