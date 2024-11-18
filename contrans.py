@@ -325,7 +325,7 @@ class contrans:
         i = 1
         for m in members:
             try:
-                print('uploading bills from {m} to MongoDB: legislator {i} of {len(members)}')
+                print(f'uploading bills from {m} to MongoDB: legislator {i} of {len(members)}')
                 self.upload_one_member_to_mongo(mongo_bills=mongo_bills, bioguideid=m)
             except Exception as e:
                 print(f"Process failed for: {m} on the {i} index.")
