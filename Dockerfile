@@ -13,7 +13,7 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 # expose port for jupyter lab
-EXPOSE 8888
+EXPOSE 8050
 
-# jupyter lab file 
-CMD ["jupyter", "lab","--ip=0.0.0.0","--allow-root", "--port=8888"]
+# run the dashboard when we launch the container 
+CMD ["python3", "app.py"]

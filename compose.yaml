@@ -1,8 +1,8 @@
 services:
   jupyter:
-    image: jcmiskill/ds6600inclassimage
+    image: jcmiskill/dashcontainer
     ports:
-      - "8888:8888"
+      - "8050:8050"
     env_file:
       - .env
     volumes:
