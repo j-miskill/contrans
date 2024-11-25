@@ -283,7 +283,7 @@ class contrans:
         myquery = f'''
         SELECT icpsr
             FROM members m
-        WHERE bioguideid = {bioguide_id}
+        WHERE bioguideid = '{bioguide_id}'
         '''
         icpsr = int(pd.read_sql_query(myquery, con=engine)['icpsr'][0])
         myquery = f'''
@@ -358,14 +358,14 @@ class contrans:
         return result_df
     
 
-    def plot_ideology(self, bioguide_id):
-                server, engine = self.connect_to_postgres(self.postgrespassword)
+    def plot_ideology(self, bioguide_id, host):
+                server, engine = self.connect_to_postgres(self.postgres_password, host=host)
                 myquery = '''
                 SELECT bioguideid, district, name, partyname, state, nominate_dim1
                 FROM members
                 '''
                 ideo = pd.read_sql_query(myquery, con=engine)
-                member_ideo = ideo.query(f"bioguideid == {bioguide_id}").reset_index(drop=True)
+                member_ideo = ideo.query(f"bioguideid == '{bioguide_id}'").reset_index(drop=True)
                 fig = px.histogram(ideo, x='nominate_dim1',
                                 nbins=60,
                                 title='Distribution of Nominate Dim1',
